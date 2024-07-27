@@ -17,15 +17,21 @@ use crate::{
 
 fn get_start_options(
     config_path: String,
+    config_is_content: bool,
     #[cfg(feature = "auto-reload")] auto_reload: bool,
     multi_thread: bool,
     auto_threads: bool,
     threads: usize,
     stack_size: usize,
 ) -> crate::StartOptions {
+    let _cfg = if config_is_content {
+        crate::Config::Str(config_path)
+    } else {
+        crate::Config::File(config_path)
+    };
     if !multi_thread {
         return crate::StartOptions {
-            config: crate::Config::File(config_path),
+            config: _cfg,
             #[cfg(feature = "auto-reload")]
             auto_reload,
             runtime_opt: crate::RuntimeOption::SingleThread,
@@ -33,14 +39,14 @@ fn get_start_options(
     }
     if auto_threads {
         return crate::StartOptions {
-            config: crate::Config::File(config_path),
+            config: _cfg,
             #[cfg(feature = "auto-reload")]
             auto_reload,
             runtime_opt: crate::RuntimeOption::MultiThreadAuto(stack_size),
         };
     }
     crate::StartOptions {
-        config: crate::Config::File(config_path),
+        config: _cfg,
         #[cfg(feature = "auto-reload")]
         auto_reload,
         runtime_opt: crate::RuntimeOption::MultiThread(threads, stack_size),
@@ -58,6 +64,29 @@ pub fn run_with_options(
 ) -> Result<(), crate::Error> {
     let opts = get_start_options(
         config_path,
+        false,
+        #[cfg(feature = "auto-reload")]
+        auto_reload,
+        multi_thread,
+        auto_threads,
+        threads,
+        stack_size,
+    );
+    crate::start(rt_id, opts)
+}
+
+pub fn run_with_options_by_config_string(
+    rt_id: crate::RuntimeId,
+    config_string: String,
+    #[cfg(feature = "auto-reload")] auto_reload: bool,
+    multi_thread: bool,
+    auto_threads: bool,
+    threads: usize,
+    stack_size: usize,
+) -> Result<(), crate::Error> {
+    let opts = get_start_options(
+        config_string,
+        true,
         #[cfg(feature = "auto-reload")]
         auto_reload,
         multi_thread,

@@ -33,6 +33,10 @@ struct Args {
     #[argh(option, short = 'c', default = "String::from(\"config.conf\")")]
     config: String,
 
+    /// the configuration string
+    #[argh(option, short = 'C')]
+    config_content: String,
+
     /// enables auto reloading when config file changes
     #[argh(switch)]
     auto_reload: bool,
@@ -118,17 +122,31 @@ fn main() {
             }
         }
     }
-
-    if let Err(e) = leaf::util::run_with_options(
-        0,
-        args.config,
-        args.auto_reload,
-        !args.single_thread,
-        true,
-        0, // auto_threads is true, this value no longer matters
-        args.thread_stack_size,
-    ) {
-        println!("start leaf failed: {}", e);
-        exit(1);
+    if !args.config_content.is_empty() {
+        if let Err(e) = leaf::util::run_with_options_by_config_string(
+            0,
+            args.config_content,
+            args.auto_reload,
+            !args.single_thread,
+            true,
+            0, // auto_threads is true, this value no longer matters
+            args.thread_stack_size,
+        ) {
+            println!("start leaf failed: {}", e);
+            exit(1);
+        }
+    } else {
+        if let Err(e) = leaf::util::run_with_options(
+            0,
+            args.config,
+            args.auto_reload,
+            !args.single_thread,
+            true,
+            0, // auto_threads is true, this value no longer matters
+            args.thread_stack_size,
+        ) {
+            println!("start leaf failed: {}", e);
+            exit(1);
+        }
     }
 }
